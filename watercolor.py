@@ -28,21 +28,22 @@ def Watercolor(f, prefix):
     image_blurring = cv2.GaussianBlur(image, average_square, sigma_x)
     w , h , channel = image_blurring.shape
     image_reshape = np.zeros((w , h ,3), np.uint8)
-    image_reshape = image_blurring // k * k
     
+    # Quantization, GaussianBlur
+    image_reshape = image_blurring // k * k
     paint = cv2.GaussianBlur(image_reshape, average_square, sigma_x)
     cv2.imwrite(prefix + file + "_paint" + ext, paint)
 
+    # Sobel edge detection
     image_preprocessed  = cv2.cvtColor(cv2.GaussianBlur(image, line_average, line_sigma_x), cv2.COLOR_BGR2GRAY)
 
-    # Canny
+    # Canny edge detection
     image_binary = cv2.Canny(image_preprocessed, threshold1 = 50, threshold2 = 55) 
     image_binary = cv2.GaussianBlur(image_binary, average_square, sigma_x)
     res, image_binary = cv2.threshold(image_binary, 90, 255, cv2.THRESH_BINARY_INV)
-
     cv2.imwrite(prefix + file + "_line" + ext, image_binary)
 
-    # Speedup processes
+    # Other procedures
     w , h , channel = paint.shape
     image_binary = np.where(image_binary > 0, 255, 0)
     image_binary = np.dstack((image_binary, image_binary, image_binary))
@@ -55,7 +56,7 @@ def Watercolor(f, prefix):
     cv2.imwrite(prefix + file + "_output" + ext, d)
 
 
-#For gif
+# For gif
 if fileext == "gif":
     # Convert gif into jpgs
     subprocess.call(('convert -verbose -coalesce %s.gif %s.jpg' % (filename, filename)).split())
@@ -110,6 +111,8 @@ else:
     f = filename + '.jpg'
     print("Processing. Please wait.")
     Watercolor(f, filename)
+    
+    # Cleanup the working directory
     os.rename("" + filename + "test_output.jpg", "" + filename + "_result.jpg")
     os.remove("" + filename + "test_line" + ".jpg")
     os.remove("" + filename + "test_paint" + ".jpg")
